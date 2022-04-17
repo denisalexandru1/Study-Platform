@@ -1,0 +1,591 @@
+-- MySQL Workbench Forward Engineering
+
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+
+-- -----------------------------------------------------
+-- Schema mydb
+-- -----------------------------------------------------
+
+-- -----------------------------------------------------
+-- Schema mydb
+-- -----------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS `mydb` DEFAULT CHARACTER SET utf8 ;
+USE `mydb` ;
+
+-- -----------------------------------------------------
+-- Table `mydb`.`users`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`users` (
+  `username` VARCHAR(45) NOT NULL,
+  `password` VARCHAR(45) NOT NULL,
+  `CNP` VARCHAR(45) NULL DEFAULT NULL,
+  `nume` VARCHAR(45) NULL DEFAULT NULL,
+  `prenume` VARCHAR(45) NOT NULL,
+  `adresa` VARCHAR(45) NULL DEFAULT NULL,
+  `nr_telefon` VARCHAR(45) NOT NULL,
+  `email` VARCHAR(45) NOT NULL,
+  `IBAN` VARCHAR(45) NOT NULL,
+  `nr_contract` BIGINT NULL DEFAULT NULL,
+  `role` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`username`),
+  UNIQUE INDEX `username_UNIQUE` (`username` ASC) VISIBLE,
+  UNIQUE INDEX `IBAN_UNIQUE` (`IBAN` ASC) VISIBLE,
+  UNIQUE INDEX `email_UNIQUE` (`email` ASC) VISIBLE,
+  UNIQUE INDEX `CNP_UNIQUE` (`CNP` ASC) VISIBLE)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`profesori`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`profesori` (
+  `username` VARCHAR(45) NOT NULL,
+  `min_ore` INT NULL DEFAULT NULL,
+  `max_ore` INT NULL DEFAULT NULL,
+  `departament` VARCHAR(45) NULL DEFAULT NULL,
+  PRIMARY KEY (`username`),
+  UNIQUE INDEX `username_UNIQUE` (`username` ASC) VISIBLE,
+  CONSTRAINT `username`
+    FOREIGN KEY (`username`)
+    REFERENCES `mydb`.`users` (`username`)
+    ON DELETE CASCADE)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`cursuri`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`cursuri` (
+  `nume_curs` VARCHAR(30) NOT NULL,
+  `descriere` LONGTEXT NULL DEFAULT NULL,
+  `nr_max_participanti` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`nume_curs`))
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`asign_profesori_cursuri`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`asign_profesori_cursuri` (
+  `username` VARCHAR(45) NOT NULL,
+  `nume_curs` VARCHAR(45) NULL DEFAULT NULL,
+  `id_asignare_prof_curs` INT NOT NULL AUTO_INCREMENT,
+  `pondere_curs` DOUBLE NULL DEFAULT NULL,
+  `pondere_laborator` DOUBLE NULL DEFAULT NULL,
+  `pondere_seminar` DOUBLE NULL DEFAULT NULL,
+  `bool_seminar` TINYINT NOT NULL,
+  `bool_laborator` TINYINT NOT NULL,
+  `bool_curs` TINYINT NOT NULL,
+  PRIMARY KEY (`id_asignare_prof_curs`),
+  INDEX `nume_curs_idx` (`nume_curs` ASC) VISIBLE,
+  INDEX `username_idx` (`username` ASC) VISIBLE,
+  CONSTRAINT `apfc_username`
+    FOREIGN KEY (`username`)
+    REFERENCES `mydb`.`profesori` (`username`)
+    ON DELETE CASCADE,
+  CONSTRAINT `nume_curs`
+    FOREIGN KEY (`nume_curs`)
+    REFERENCES `mydb`.`cursuri` (`nume_curs`)
+    ON DELETE CASCADE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 23
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`grupa_studiu`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`grupa_studiu` (
+  `id_grupa` INT NOT NULL AUTO_INCREMENT,
+  `nume_curs` VARCHAR(30) NULL DEFAULT NULL,
+  PRIMARY KEY (`id_grupa`),
+  INDEX `nume_curs_idx` (`nume_curs` ASC) VISIBLE,
+  CONSTRAINT `gs_nume_curs`
+    FOREIGN KEY (`nume_curs`)
+    REFERENCES `mydb`.`cursuri` (`nume_curs`)
+    ON DELETE CASCADE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 19
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`activitati_grupa_studiu`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`activitati_grupa_studiu` (
+  `id_activ_grupa` INT NOT NULL AUTO_INCREMENT,
+  `participanti_min` INT NULL DEFAULT NULL,
+  `id_grupa` INT NULL DEFAULT NULL,
+  `data_expirare` TIME NULL DEFAULT NULL,
+  PRIMARY KEY (`id_activ_grupa`),
+  INDEX `id_grupa_idx` (`id_grupa` ASC) VISIBLE,
+  CONSTRAINT `id_grupa`
+    FOREIGN KEY (`id_grupa`)
+    REFERENCES `mydb`.`grupa_studiu` (`id_grupa`)
+    ON DELETE CASCADE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 26
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`activitate`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`activitate` (
+  `id_activ` INT NOT NULL AUTO_INCREMENT,
+  `start_date` DATE NULL DEFAULT NULL,
+  `final_date` DATE NULL DEFAULT NULL,
+  `zi` VARCHAR(10) NULL DEFAULT NULL,
+  `ora` TIME NULL DEFAULT NULL,
+  `durata` INT NULL DEFAULT NULL,
+  `tip_activitate` VARCHAR(30) NULL DEFAULT NULL,
+  `locuri_max` INT NULL DEFAULT NULL,
+  `id_asignare_prof_curs` INT NULL DEFAULT NULL,
+  `id_activ_grupa` INT NULL DEFAULT NULL,
+  `nr_part_curent` INT NOT NULL,
+  PRIMARY KEY (`id_activ`),
+  INDEX `id_asignare_prof_curs_idx` (`id_asignare_prof_curs` ASC) VISIBLE,
+  INDEX `id_activ_grupa_idx` (`id_activ_grupa` ASC) VISIBLE,
+  CONSTRAINT `activitate_id_asignare_prof_curs`
+    FOREIGN KEY (`id_asignare_prof_curs`)
+    REFERENCES `mydb`.`asign_profesori_cursuri` (`id_asignare_prof_curs`)
+    ON DELETE CASCADE,
+  CONSTRAINT `id_activ_grupa`
+    FOREIGN KEY (`id_activ_grupa`)
+    REFERENCES `mydb`.`activitati_grupa_studiu` (`id_activ_grupa`)
+    ON DELETE CASCADE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 42
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`studenti`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`studenti` (
+  `username` VARCHAR(45) NOT NULL,
+  `an_studiu` INT NULL DEFAULT NULL,
+  `nr_ore` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`username`),
+  UNIQUE INDEX `username_UNIQUE` (`username` ASC) VISIBLE,
+  CONSTRAINT `stud_username`
+    FOREIGN KEY (`username`)
+    REFERENCES `mydb`.`users` (`username`)
+    ON DELETE CASCADE)
+ENGINE = InnoDB
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`asign_studenti_cursuri`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`asign_studenti_cursuri` (
+  `username` VARCHAR(45) NOT NULL,
+  `id_asignare_prof_curs` INT NULL DEFAULT NULL,
+  `id_asignare_student_prof_curs` INT NOT NULL AUTO_INCREMENT,
+  `nota_finala` DECIMAL(10,0) NULL DEFAULT NULL,
+  `nota_laborator` DOUBLE NULL DEFAULT NULL,
+  `nota_seminar` DOUBLE NULL DEFAULT NULL,
+  `nota_curs` DOUBLE NULL DEFAULT NULL,
+  PRIMARY KEY (`id_asignare_student_prof_curs`),
+  INDEX `id_asignare_prof_curs_idx` (`id_asignare_prof_curs` ASC) VISIBLE,
+  INDEX `username_idx` (`username` ASC) VISIBLE,
+  CONSTRAINT `asc_username`
+    FOREIGN KEY (`username`)
+    REFERENCES `mydb`.`studenti` (`username`)
+    ON DELETE CASCADE,
+  CONSTRAINT `id_asignare_prof_curs`
+    FOREIGN KEY (`id_asignare_prof_curs`)
+    REFERENCES `mydb`.`asign_profesori_cursuri` (`id_asignare_prof_curs`)
+    ON DELETE CASCADE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 133
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`grupa_chat`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`grupa_chat` (
+  `id_mesaj` INT NOT NULL AUTO_INCREMENT,
+  `username` VARCHAR(45) NULL DEFAULT NULL,
+  `textmesaj` LONGTEXT NULL DEFAULT NULL,
+  `id_grupa` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`id_mesaj`),
+  INDEX `id_grupa_idx` (`id_grupa` ASC) VISIBLE,
+  INDEX `username_idx` (`username` ASC) VISIBLE,
+  CONSTRAINT `gc_id_grupa`
+    FOREIGN KEY (`id_grupa`)
+    REFERENCES `mydb`.`grupa_studiu` (`id_grupa`)
+    ON DELETE CASCADE,
+  CONSTRAINT `gc_username`
+    FOREIGN KEY (`username`)
+    REFERENCES `mydb`.`studenti` (`username`)
+    ON DELETE CASCADE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 15
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`invitatii_activitate_prof`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`invitatii_activitate_prof` (
+  `id_invitatie_activitate_prof` INT NOT NULL AUTO_INCREMENT,
+  `id_activ` INT NULL DEFAULT NULL,
+  `username_destinatar` VARCHAR(45) NULL DEFAULT NULL,
+  PRIMARY KEY (`id_invitatie_activitate_prof`),
+  INDEX `id_activ_idx` (`id_activ` ASC) VISIBLE,
+  CONSTRAINT `id_activ`
+    FOREIGN KEY (`id_activ`)
+    REFERENCES `mydb`.`activitate` (`id_activ`)
+    ON DELETE CASCADE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 16
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`invitatii_grupa`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`invitatii_grupa` (
+  `id_invitatie` INT NOT NULL AUTO_INCREMENT,
+  `id_grupa` INT NOT NULL,
+  `username_destinatar` VARCHAR(45) NOT NULL,
+  PRIMARY KEY (`id_invitatie`),
+  INDEX `id_grupa_idx` (`id_grupa` ASC) VISIBLE,
+  CONSTRAINT `invitatii_grupa_ibfk_1`
+    FOREIGN KEY (`id_grupa`)
+    REFERENCES `mydb`.`grupa_studiu` (`id_grupa`)
+    ON DELETE CASCADE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 27
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`participanti`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`participanti` (
+  `id_part` INT NOT NULL AUTO_INCREMENT,
+  `id_activ` INT NULL DEFAULT NULL,
+  `username` VARCHAR(45) NULL DEFAULT NULL,
+  `nota_activitate` DOUBLE NULL DEFAULT NULL,
+  PRIMARY KEY (`id_part`),
+  INDEX `id_activ_curs_idx` (`id_activ` ASC) VISIBLE,
+  INDEX `username_idx` (`username` ASC) VISIBLE,
+  CONSTRAINT `id_activ_curs`
+    FOREIGN KEY (`id_activ`)
+    REFERENCES `mydb`.`activitate` (`id_activ`)
+    ON DELETE CASCADE,
+  CONSTRAINT `participanti_username`
+    FOREIGN KEY (`username`)
+    REFERENCES `mydb`.`users` (`username`)
+    ON DELETE CASCADE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 63
+DEFAULT CHARACTER SET = utf8mb3;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`participanti_grupa`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`participanti_grupa` (
+  `id_part_grupa` INT NOT NULL AUTO_INCREMENT,
+  `username` VARCHAR(45) NULL DEFAULT NULL,
+  `id_grupa` INT NULL DEFAULT NULL,
+  PRIMARY KEY (`id_part_grupa`),
+  INDEX `id_grupa_idx` (`id_grupa` ASC) VISIBLE,
+  INDEX `username_idx` (`username` ASC) VISIBLE,
+  CONSTRAINT `pg_id_grupa`
+    FOREIGN KEY (`id_grupa`)
+    REFERENCES `mydb`.`grupa_studiu` (`id_grupa`)
+    ON DELETE CASCADE,
+  CONSTRAINT `pg_username`
+    FOREIGN KEY (`username`)
+    REFERENCES `mydb`.`studenti` (`username`)
+    ON DELETE CASCADE)
+ENGINE = InnoDB
+AUTO_INCREMENT = 42
+DEFAULT CHARACTER SET = utf8mb3;
+
+USE `mydb` ;
+
+-- -----------------------------------------------------
+-- procedure GetProfesorInfo
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `mydb`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetProfesorInfo`(IN username VARCHAR(45), OUT min_ore INT, OUT max_ore INT, OUT departament varchar(45))
+begin
+    select u.min_ore, u.max_ore, u.departament into min_ore, max_ore, departament from profesori u where u.username = username;
+end$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure GetStudentInfo
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `mydb`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetStudentInfo`(IN username VARCHAR(45), OUT an_studiu INT, OUT nr_ore INT)
+begin
+    select u.an_studiu, u.nr_ore into an_studiu, nr_ore from studenti u where u.username = username;
+end$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure GetUserInfo
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `mydb`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetUserInfo`(IN username VARCHAR(45), OUT CNP varchar(45), OUT nume varchar(45), OUT prenume varchar(45),OUT adresa varchar(45), out nr_telefon varchar(45), 
+										OUT email varchar(45), OUT IBAN varchar(45), OUT nr_contract varchar(45))
+begin
+	select u.CNP, u.nume, u.prenume, u.adresa, u.nr_telefon, u.email, u.IBAN, u.nr_contract into CNP,nume, prenume, adresa, nr_telefon, email, IBAN, nr_contract from users u where u.username = username;
+end$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure InsertStudentLaProfesorMin
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `mydb`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `InsertStudentLaProfesorMin`(IN username_student varchar(45), IN nume_curs_ales varchar(45))
+begin    
+    select tbl.valu into @id_prof_min_ales from (select apc.id_asignare_prof_curs as valu, count(ascc.id_asignare_student_prof_curs) cnt from asign_profesori_cursuri apc left join  asign_studenti_cursuri ascc on apc.id_asignare_prof_curs = ascc.id_asignare_prof_curs
+    where apc.nume_curs = nume_curs_ales group by apc.id_asignare_prof_curs) tbl order by tbl.cnt asc limit 1;
+    
+    insert into asign_studenti_cursuri(username, id_asignare_prof_curs, nota_curs, nota_seminar, nota_laborator, nota_finala) values (username_student, @id_prof_min_ales, 0.0, 0.0, 0.0, 0.0);
+end$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure RegisterProfesor
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `mydb`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `RegisterProfesor`(IN username varchar(45), IN password varchar(45), IN CNP varchar(45),IN nume varchar(45), IN prenume varchar(45),
+								IN adresa varchar(45), IN nr_telefon varchar(45), IN email varchar(45), IN IBAN varchar(45),
+                                IN nr_contract varchar(45), IN role varchar(45), IN departament varchar(45))
+begin
+	call RegisterUser(username, password, cnp, nume, prenume, adresa, nr_telefon, email, IBAN, nr_contract, "profesor");
+    insert into profesori (username, min_ore, max_ore, departament) values (username, 4, 20,departament);
+end$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure RegisterStudent
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `mydb`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `RegisterStudent`(IN username varchar(45), IN password varchar(45), IN CNP varchar(45),IN nume varchar(45), IN prenume varchar(45),
+								IN adresa varchar(45), IN nr_telefon varchar(45), IN email varchar(45), IN IBAN varchar(45),
+                                IN nr_contract varchar(45), IN role varchar(45), IN an_studiu int, IN nr_ore int)
+begin
+	call RegisterUser(username, password, cnp, nume, prenume, adresa, nr_telefon, email, IBAN, nr_contract, "student");
+    insert into studenti (username, an_studiu, nr_ore) values (username, an_studiu, 20);
+end$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure RegisterUser
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `mydb`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `RegisterUser`(IN username varchar(45), IN password varchar(45), IN CNP varchar(45), IN nume varchar(45), IN prenume varchar(45),  IN adresa varchar(45),
+							IN nr_telefon varchar(45), IN email varchar(45), IN IBAN varchar(45), IN nr_contract varchar(45), IN role varchar(45))
+begin
+	insert into users(username, password, CNP, nume, prenume, adresa, nr_telefon, email, IBAN, nr_contract, role) values (username, password, CNP, nume, prenume, adresa, nr_telefon, email, IBAN, nr_contract, role);
+end$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure checkIfActivityInInterval
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `mydb`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `checkIfActivityInInterval`(IN username varchar(45), IN  startTime TIME, IN endTime TIME, IN zi varchar(10), OUT isActivityInInterval int)
+begin 
+		
+	if exists 
+        (select activ.id_activ from activitate activ, asign_profesori_cursuri apc, asign_studenti_cursuri ascc, participanti part
+        where ascc.username = username and ascc.id_asignare_prof_curs = apc.id_asignare_prof_curs and apc.id_asignare_prof_curs = activ.id_asignare_prof_curs and part.id_activ = activ.id_activ 
+        and part.username = username and ((ADDTIME(activ.ora, CONCAT(activ.durata, ":00:00")) > startTime and  ADDTIME(activ.ora, CONCAT(activ.durata, ":00:00")) < endTime) or
+        (activ.ora > startTime and  activ.ora < endTime) or (activ.ora <= startTime and ADDTIME(activ.ora, CONCAT(activ.durata, ":00:00")) >= endTime )) and activ.zi = zi )
+	then 
+		set isActivityInInterval = 1;
+	else 
+		set isActivityInInterval = 0;
+	end if;
+end$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure checkIfActivityMaxAttendants
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `mydb`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `checkIfActivityMaxAttendants`(IN my_id_activ INT, OUT bool_activ INT)
+begin
+	select count(*) into @my_bool from participanti where participanti.id_activ = my_id_activ;
+    if @my_bool < (select locuri_max from activitate where activitate.id_activ = my_id_activ) then
+		set bool_activ = 1;
+	else 
+		set bool_activ = 0;
+	end if;
+    
+end$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure deleteCurs
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `mydb`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `deleteCurs`(in nume_curs_in varchar(45))
+begin
+	delete from asign_studenti_cursuri
+    where id_asignare_prof_curs = (select id_asignare_prof_curs from asign_profesori_cursuri where nume_curs = nume_curs_in);
+
+	delete from participanti
+    where id_activ = (select id_activ from activitate where 
+						id_asignare_prof_curs = (select id_asignare_prof_curs from asign_profesori_cursuri where nume_curs = nume_curs_in));
+
+	delete from activitate
+    where id_asignare_prof_curs = (select id_asignare_prof_curs from asign_profesori_cursuri where nume_curs = nume_curs_in);
+
+	delete from asign_profesori_cursuri
+    where nume_curs = nume_curs_in;
+    
+    delete from cursuri
+    where nume_curs = nume_curs_in;
+end$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure deleteProfesorFromCurs
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `mydb`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `deleteProfesorFromCurs`(in username_profesor varchar(45), in nume_curs_in varchar(45))
+begin
+	delete from asign_studenti_cursuri
+    where id_asignare_prof_curs = (select id_asignare_prof_curs from asign_profesori_cursuri where username = username_profesor and nume_curs = nume_curs_in);
+
+	delete from participanti
+    where id_activ = (select id_activ from activitate where 
+						id_asignare_prof_curs = (select id_asignare_prof_curs from asign_profesori_cursuri where username = username_profesor and nume_curs = nume_curs_in));
+
+	delete from activitate
+    where id_asignare_prof_curs = (select id_asignare_prof_curs from asign_profesori_cursuri where username = username_profesor and nume_curs = nume_curs_in);
+
+	delete from asign_profesori_cursuri
+    where username = username_profesor and nume_curs = nume_curs_in;
+end$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure deleteStudentFromCurs
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `mydb`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `deleteStudentFromCurs`(in username_student varchar(45), in username_profesor varchar(45), in nume_curs_in varchar(45))
+begin
+
+	delete participanti from asign_studenti_cursuri, asign_profesori_cursuri, activitate, participanti where asign_studenti_cursuri.id_asignare_prof_curs = asign_profesori_cursuri.id_asignare_prof_curs and
+    asign_profesori_cursuri.id_asignare_prof_curs = activitate.id_asignare_prof_curs and activitate.id_activ = participanti.id_activ and participanti.username = username_student;
+    
+	delete asign_studenti_cursuri from asign_studenti_cursuri, asign_profesori_cursuri where asign_studenti_cursuri.id_asignare_prof_curs = asign_profesori_cursuri.id_asignare_prof_curs
+	and asign_studenti_cursuri.username = username_student and asign_profesori_cursuri.username = username_profesor and asign_profesori_cursuri.nume_curs = nume_curs_in;
+    
+end$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure deleteUser
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `mydb`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `deleteUser`(in username_in varchar(45))
+begin
+	delete from users
+    where username = username_in;
+end$$
+
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- procedure showActStudPosibile
+-- -----------------------------------------------------
+
+DELIMITER $$
+USE `mydb`$$
+CREATE DEFINER=`root`@`localhost` PROCEDURE `showActStudPosibile`(in username varchar(45))
+begin
+   select distinct activitate.id_activ from activitate, asign_studenti_cursuri, participanti 
+    where asign_studenti_cursuri.username=username and 
+    asign_studenti_cursuri.id_asignare_prof_curs = activitate.id_asignare_prof_curs
+	and activitate.locuri_max > activitate.nr_part_curent and not exists (select id_part from participanti p where p.id_activ = activitate.id_activ and p.username = username);
+end$$
+
+DELIMITER ;
+USE `mydb`;
+
+DELIMITER $$
+USE `mydb`$$
+CREATE
+DEFINER=`root`@`localhost`
+TRIGGER `mydb`.`nota_finala`
+BEFORE UPDATE ON `mydb`.`asign_studenti_cursuri`
+FOR EACH ROW
+SET
+		new.nota_finala = ( SELECT pondere_curs from asign_profesori_cursuri where id_asignare_prof_curs = new.id_asignare_prof_curs  ) * new.nota_curs
+        + ( SELECT pondere_seminar from asign_profesori_cursuri where id_asignare_prof_curs = new.id_asignare_prof_curs  )  * new.nota_seminar 
+        + ( SELECT pondere_laborator from asign_profesori_cursuri where id_asignare_prof_curs = new.id_asignare_prof_curs  )  * new.nota_laborator$$
+
+USE `mydb`$$
+CREATE
+DEFINER=`root`@`localhost`
+TRIGGER `mydb`.`incrementNumberOfParticipantiActivitate`
+AFTER INSERT ON `mydb`.`participanti`
+FOR EACH ROW
+begin
+	update activitate set nr_part_curent = nr_part_curent + 1 where activitate.id_activ = new.id_activ;
+end$$
+
+
+DELIMITER ;
+
+SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
